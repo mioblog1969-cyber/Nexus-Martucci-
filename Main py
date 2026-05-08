@@ -1,0 +1,43 @@
+import streamlit as st
+import google.generativeai as genai
+from PIL import Image
+
+# Questa riga legge la chiave dai "Secrets" di Streamlit (per sicurezza)
+if "GEMINI_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_KEY"])
+else:
+    st.error("⚠️ Chiave API non trovata nei Secrets di Streamlit!")
+
+# Configurazione Grafica
+st.set_page_config(page_title="NEXUS V6 PRO", page_icon="🛡️")
+
+st.title("🛡️ NEXUS MARTUCCI V6 PRO")
+st.markdown("---")
+
+# Menu di scelta
+scelta = st.sidebar.radio("Scegli Analisi:", ["Notizia Testuale", "Immagine/Foto IA"])
+
+if scelta == "Notizia Testuale":
+    testo = st.text_area("Incolla qui il testo della notizia:", height=150)
+    if st.button("ANALIZZA TESTO"):
+        if testo:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            with st.spinner('Scansione in corso...'):
+                res = model.generate_content(f"Analizza l'attendibilità di questa notizia e l'impronta IA: {testo}")
+                st.info(res.text)
+        else:
+            st.warning("Inserisci del testo!")
+
+elif scelta == "Immagine/Foto IA":
+    file = st.file_uploader("Carica l'immagine sospetta", type=['jpg', 'jpeg', 'png'])
+    if file:
+        img = Image.open(file)
+        st.image(img, caption="Immagine da analizzare", use_column_width=True)
+        if st.button("SCANSIONE PIXEL"):
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            with st.spinner('L\'IA sta osservando i dettagli...'):
+                res = model.generate_content(["Analizza questa immagine: è stata generata da un'intelligenza artificiale? Controlla dita, ombre e scritte.", img])
+                st.success(res.text)
+
+st.sidebar.markdown("---")
+st.sidebar.write("🛰️ **Status:** Operativo")
